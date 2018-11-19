@@ -15,7 +15,7 @@ I was a complete novice at Node when I made this, and the time to learn it appro
       "pug" : "^2.0.0-beta6"
     }
 ```
-##Usage
+## Usage
 
 Anyway, it *should* work if you copy it as-is, `cd` to `web`, and run `node index.js`.  Select an image, mess with the settings, and click go.  For example, try entering this for the convolution kernel:
 
