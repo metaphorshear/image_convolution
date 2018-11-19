@@ -1,0 +1,1 @@
+cmd_Release/obj.target/image_threaded.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=image_threaded.so -o Release/obj.target/image_threaded.so -Wl,--whole-archive ./Release/obj.target/image_threaded/image_threaded.o -Wl,--no-whole-archive -lgomp

@@ -1,0 +1,76 @@
+html(ng-app='image_t')
+    head
+        title Multi-threaded Image Convolution
+        script(src="//code.jquery.com/jquery-2.1.4.min.js")
+        script(src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js")
+        script.
+            var imageApp = angular.module('image_t', []);
+            var ctx;
+
+            imageApp.controller('imageController', function ($scope, $http) {
+                $scope.fsp = new Array(new Array(3), new Array(3), new Array(3));
+                for (var i = 0; i < 3; ++i){
+                    for (var j = 0; j < 3; ++j){
+                        $scope.fsp[i][j] = {value: 1}
+                    }
+                }
+                $scope.divisor = 1;
+                $scope.threads = 4;
+                $scope.submit = function(target) {
+                    console.log("Sending request to server...");
+                    $http.post('/' + target, {threads:$scope.threads, divisor: $scope.divisor, 
+                        fsp: JSON.stringify($scope.fsp), width: window.imageData.width,
+                        height: window.imageData.height, data: JSON.stringify(window.imageData.data)})
+                        .then(function(docs)  {
+                            console.log("Received result!");
+                            var result = docs.data.result;
+                            console.log("Copying to ImageData object...");
+                            for (var i = 0; i < result.length; ++i){
+                                window.imageData.data[i] = result[i];
+                            }
+                            console.log("Writing to canvas...");
+                            ctx = document.getElementById('canvas').getContext('2d');
+                            ctx.putImageData(window.imageData, 0, 0);
+                            console.log("Done!");
+                        });
+                    };
+            });
+            function draw(ev){
+                ctx = document.getElementById('canvas').getContext('2d'),
+                img = new Image(),
+                curFile = document.getElementById("uploadimage").files[0],
+                url = window.URL || window.webkitURL,
+                src = url.createObjectURL(curFile);
+                img.src = src;
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    url.revokeObjectURL(src);
+                    window.imageData = ctx.getImageData(0, 0, 800, 600);
+                }
+            }
+            window.onload = function(){document.getElementById("uploadimage").addEventListener("change", draw, false);}
+            
+    body(ng-controller='imageController')
+        div(style="display: table; position: absolute; height: 100%; width: 100%")
+            div(style="position: relative; display: table-cell; vertical-align: middle; width: 25%; left: 5%; margin: auto")
+                |Enter your convolution kernel here:
+                div(style="padding: 30px; padding-left: 45px")    
+                    form(ng-submit="submit('"+target+"')")
+                        div(ng-repeat="n in fsp track by $index")
+                            span(ng-repeat="m in n track by $index")
+                                input(ng-model="m.value", size="2")
+                        
+                        label(for="divisor") Divisor:&nbsp;&nbsp;&nbsp;&nbsp;
+                        input(ng-model="divisor", size="2")
+                        br
+                        label(for="threads") Threads:     
+                        select(ng-model="threads")
+                            -var i = 2;
+                            while i < 9
+                                option(value=""+i) #{i}
+                                -i++
+                        input(type="submit" id="submit" value="Go")
+            div(style="display: table-cell; width: 70%; vertical-align: middle;")
+                div(style="margin: auto; display: block; width: 800px")
+                    canvas(id="canvas", width="800", height="600")
+                    input(type="file", name="img", size="65", id="uploadimage")
